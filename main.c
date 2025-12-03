@@ -1,3 +1,4 @@
+//#include <stdio.h>
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -5,6 +6,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+
 
 static void startothers(void);
 static void mpmain(void)  __attribute__((noreturn));
@@ -34,6 +36,7 @@ main(void)
   startothers();   // start other processors
   kinit2(P2V(4*1024*1024), P2V(PHYSTOP)); // must come after startothers()
   userinit();      // first user process
+  cprintf("Test del random: %d%d%d\n",krand(),krand(),krand());
   mpmain();        // finish this processor's setup
 }
 

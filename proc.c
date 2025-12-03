@@ -6,7 +6,6 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -24,6 +23,13 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+}
+
+int randstate = 1;
+int
+krand(void){
+    randstate = randstate * 1664525 + 1013904223;
+    return randstate;
 }
 
 // Must be called with interrupts disabled
@@ -74,6 +80,9 @@ static struct proc*
 allocproc(void)
 {
   struct proc *p;
+
+
+
   char *sp;
 
   acquire(&ptable.lock);
@@ -88,6 +97,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->tickets = 1;   //Inicializacion de Tickets
 
   release(&ptable.lock);
 
@@ -198,6 +208,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   np->parent = curproc;
+  np->tickets = curproc->tickets; //<-- Aqui asignamos para que el hijo herede la misma cantidad de tickets
   *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -523,7 +534,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d\t%s\t%s\t Prueba Ticket: %d\n", p->pid, state, p->name,p->tickets);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -532,3 +543,5 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+
