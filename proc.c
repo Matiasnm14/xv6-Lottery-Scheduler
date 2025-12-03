@@ -25,8 +25,8 @@ pinit(void)
   initlock(&ptable.lock, "ptable");
 }
 
-int randstate = 1;
-int
+uint randstate = 1;
+uint
 krand(void){
     randstate = randstate * 1664525 + 1013904223;
     return randstate;
