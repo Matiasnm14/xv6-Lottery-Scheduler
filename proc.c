@@ -332,37 +332,57 @@ wait(void)
 //      via swtch back to the scheduler.
 void
 scheduler(void)
-{
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
+  {
+    struct proc *p;
+    struct cpu *c = mycpu();
+    c->proc = 0;
+
+
+
   
-  for(;;){
+    for(;;){
     // Enable interrupts on this processor.
-    sti();
+      sti();
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+      acquire(&ptable.lock);
+      
+      int total_tickets = 0;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+        if(p->state == RUNNABLE)
+          total_tickets += p->tickets;
+       
+        
+        if(total_tickets > 0)
+        {
+          long winner_ticket = (krand() % total_tickets) +1;
+          long current_ticket_count = 0;
+          
+          for(p = ptable.proc; p< &ptable.proc[NPROC]; p++){
+            if(p->state == RUNNABLE)
+            {
+              current_ticket_count += p->tickets;
+              
+              if(current_ticket_count >= winner_ticket){
+               
+                c -> proc = p;
+                switchuvm(p);
+                p->state = RUNNING;
+                
+                swtch(&(c -> scheduler), p->context);
+                switchkvm();
+                c -> proc =0;
+                break;
+              }
+            }
+          }
+        }
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -534,7 +554,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d\t%s\t%s\t Prueba Ticket: %d\n", p->pid, state, p->name,p->tickets);
+    cprintf("PID: %d\t STATE: %s\t NAME: %s\t Ticket: %d\n", p->pid, state, p->name,p->tickets);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
