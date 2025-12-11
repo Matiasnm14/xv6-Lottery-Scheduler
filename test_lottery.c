@@ -6,8 +6,12 @@ int
 main(int argc, char*argv[])
 {
   int pid;
+  int count = 0;
   
-  settickets(100);
+  int start_time = uptime();
+  int duration = 1000;
+
+  settickets(99);
   pid = fork();
   
   if(pid < 0){
@@ -17,9 +21,16 @@ main(int argc, char*argv[])
 
   if(pid == 0){
     settickets(1);
-    for(;;){}
+    while(uptime() < start_time + duration){
+      count++;
+    }
+    printf(0,"Hijo (1 ticket) completo: %d\n",count);
   }else{
-    for(;;){}
+    while(uptime() < start_time + duration){
+      count++;
+    }
+    printf(0,"Padre (100 tickets) completo: %d\n",count);
   }
+
   exit();
 }

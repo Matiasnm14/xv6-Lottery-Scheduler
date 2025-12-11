@@ -6,6 +6,12 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "spinlock.h"
+
+struct {
+  struct spinlock lock;
+  struct proc proc[NPROC];
+} pptable;
 
 int
 sys_fork(void)
@@ -100,8 +106,9 @@ sys_settickets(void)
 
     if(n < 1)
         return -1;
-    
+    acquire(&pptable.lock);
     myproc()->tickets =n;
+    release(&pptable.lock);
     return 0;
 }
 

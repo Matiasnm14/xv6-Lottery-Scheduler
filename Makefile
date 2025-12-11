@@ -183,6 +183,8 @@ UPROGS=\
 	_wc\
 	_zombie\
   _test_lottery\
+  _fork_test_tickets\
+  _test_lottery_params\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
